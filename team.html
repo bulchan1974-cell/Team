@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบลงทะเบียนนักศึกษา - วิทยาลัยเทคนิคนางรอง</title>
+
+  <!-- โหลด Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- โหลด Supabase JS v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- โหลดฟอนต์ Prompt และ Sarabun สำหรับภาษาไทย -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'Sarabun', 'sans-serif'],
+            body: ['Sarabun', 'Prompt', 'sans-serif'],
+          },
+          colors: {
+            nrBlue: {
+              950: '#7f1d1d',
+              900: '#991b1b',
+              800: '#b91c1c',
+              700: '#dc2626',
+              600: '#ef4444',
+              100: '#fee2e2',
+              50: '#fef2f2',
+            },
+            nrGold: {
+              600: '#991b1b',
+              500: '#b91c1c',
+              400: '#dc2626',
+              100: '#fee2e2',
+              50: '#fef2f2',
+            },
+          },
+          boxShadow: {
+            card: '0 10px 30px -10px rgba(185, 28, 28, 0.12)',
+            gold: '0 8px 20px -6px rgba(220, 38, 38, 0.35)',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: 'Prompt', 'Sarabun', sans-serif;
+      background-color: #fef2f2;
+      color: #0f172a;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ปรับแต่ง Scrollbar ให้ดูสุภาพเข้ากับธีมแดง-ขาว */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #fef2f2;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #fca5a5;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #dc2626;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-nrBlue-50 text-slate-800 antialiased">
+
+  <!-- ส่วนหัว (Header) โทนแดง-ขาว สไตล์อาชีวศึกษา -->
+  <header class="bg-gradient-to-r from-nrBlue-900 via-nrBlue-800 to-nrBlue-700 text-white border-b-4 border-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <!-- ตราสัญลักษณ์และชื่อสถานศึกษา -->
+        <div class="flex items-start sm:items-center gap-4">
+          <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white p-1 shadow-gold shrink-0 border border-red-100 flex items-center justify-center overflow-hidden">
+            <img
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5v0jyy4jUQ_ge1Zt95Xi8yj33IMfkJ_AA3zurlC8BpQ&s=10"
+              alt="ตราวิทยาลัยเทคนิคนางรอง"
+              class="w-full h-full object-contain rounded-xl"
+              onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');"
+            />
+            <!-- สำรอง SVG กรณีโหลดรูปภาพไม่สำเร็จ -->
+            <svg class="hidden w-9 h-9 text-nrBlue-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3L2 8l10 5 10-5-10-5z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 10.5v5.5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5.5" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M22 8v7" />
+            </svg>
+          </div>
+
+          <div>
+            <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white text-nrBlue-800 shadow-xs mb-1">
+              <span>สำนักงานคณะกรรมการการอาชีวศึกษา (สอศ.)</span>
+            </div>
+            <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-white">
+              วิทยาลัยเทคนิคนางรอง
+            </h1>
+            <p class="text-xs sm:text-sm text-red-50 font-body mt-0.5">
+              Nang Rong Technical College · ระบบลงทะเบียนนักศึกษาใหม่และรายงานตัวเข้าศึกษาต่อ
+            </p>
+          </div>
+        </div>
+
+        <!-- ป้ายสถานะการเชื่อมต่อ Supabase / Demo Mode -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div id="connection-status-badge" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium bg-white/15 text-white border border-white/30 backdrop-blur-sm">
+            <span id="connection-dot" class="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></span>
+            <span id="connection-text">โหมดทดลองใช้งาน (Demo / Local)</span>
+          </div>
+
+          <button
+            type="button"
+            onclick="switchTab('settings')"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white hover:bg-red-50 text-nrBlue-800 border border-white transition shadow cursor-pointer"
+          >
+            <svg class="w-4 h-4 text-nrBlue-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>ตั้งค่า Supabase</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- แถบแจ้งเตือนคำแนะนำเมื่อยังไม่ได้ตั้งค่า Supabase -->
+  <div id="supabase-notice-banner" class="bg-white border-b border-red-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm text-slate-800">
+      <div class="flex items-start sm:items-center gap-2.5 font-body">
+        <svg class="w-5 h-5 text-nrBlue-700 shrink-0 mt-0.5 sm:mt-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>
+          <strong>คำแนะนำ:</strong> ขณะนี้ระบบกำลังทำงานใน <strong>โหมดทดลองใช้งาน (Offline / Local Demo)</strong> ข้อมูลจะถูกเก็บในเบราว์เซอร์ของคุณ หากต้องการบันทึกลงฐานข้อมูลจริง กรุณาไปที่แท็บ <strong>"ตั้งค่า Supabase & SQL Schema"</strong> เพื่อกรอก Project URL, Anon Key และรันโค้ด SQL สร้างตาราง
+        </span>
+      </div>
+      <button
+        type="button"
+        onclick="switchTab('settings')"
+        class="text-nrBlue-700 hover:text-nrBlue-900 font-semibold underline shrink-0 text-left sm:text-right cursor-pointer"
+      >
+        ไปหน้าตั้งค่า →
+      </button>
+    </div>
+  </div>
+
+  <!-- แถบนำทางหลัก (Navigation Tabs) -->
+  <nav class="bg-white border-b border-red-100 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex overflow-x-auto no-scrollbar gap-2 py-2.5">
+        <button
+          id="tab-btn-register"
+          type="button"
+          onclick="switchTab('register')"
+          class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition cursor-pointer bg-nrBlue-700 text-white shadow-sm"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+          <span>1. ลงทะเบียนนักศึกษา</span>
+        </button>
+
+        <button
+          id="tab-btn-students"
+          type="button"
+          onclick="switchTab('students')"
+          class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition cursor-pointer text-slate-600 hover:bg-nrBlue-50 hover:text-nrBlue-900"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          <span>2. รายชื่อผู้ลงทะเบียน / ตรวจสอบสถานะ</span>
+          <span id="students-count-badge" class="ml-1 px-2 py-0.5 text-xs rounded-full bg-red-100 text-nrBlue-800 font-bold">
+            0
+          </span>
+        </button>
+
+        <button
+          id="tab-btn-settings"
+          type="button"
+          onclick="switchTab('settings')"
+          class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition cursor-pointer text-slate-600 hover:bg-red-50 hover:text-nrBlue-800"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+          </svg>
+          <span>3. ตั้งค่า Supabase & SQL Schema</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- กล่องแจ้งเตือนระบบ (Toast / Alert Box แทน alert()) -->
+  <div id="global-alert" class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 hidden">
+    <div id="global-alert-inner" class="rounded-2xl p-4 border flex items-start justify-between gap-3 shadow-sm fade-in">
+      <div class="flex items-start gap-3">
+        <div id="global-alert-icon" class="shrink-0 mt-0.5"></div>
+        <div class="font-body text-sm">
+          <p id="global-alert-title" class="font-bold"></p>
+          <p id="global-alert-message" class="mt-0.5"></p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onclick="hideGlobalAlert()"
+        class="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition cursor-pointer"
+        aria-label="ปิดข้อความแจ้งเตือน"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- เนื้อหาหลัก -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- ========================================================= -->
+    <!-- แท็บที่ 1: หน้าลงทะเบียนนักศึกษา (Student Registration Form) -->
+    <!-- ========================================================= -->
+    <section id="tab-register" class="tab-panel fade-in">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- ฟอร์มกรอกข้อมูล (8 คอลัมน์บนจอใหญ่) -->
+        <div class="lg:col-span-8">
+          <div class="bg-white rounded-3xl shadow-card border border-red-100 overflow-hidden">
+            <!-- หัวข้อฟอร์ม -->
+            <div class="bg-gradient-to-r from-nrBlue-800 to-nrBlue-700 px-6 py-5 text-white flex items-center justify-between">
+              <div>
+                <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+                  <span class="w-2 h-6 rounded-full bg-white inline-block"></span>
+                  แบบฟอร์มลงทะเบียนนักศึกษาใหม่
+                </h2>
+                <p class="text-xs sm:text-sm text-red-50 font-body mt-1">
+                  กรอกข้อมูลให้ครบถ้วนและถูกต้องตามเอกสารหลักฐานของทางราชการ
+                </p>
+              </div>
+              <span class="hidden sm:inline-block px-3 py-1 rounded-full text-xs font-bold bg-white text-nrBlue-800">
+                ปีการศึกษา 2569
+              </span>
+            </div>
+
+            <form id="registration-form" onsubmit="handleRegisterSubmit(event)" class="p-6 sm:p-8 space-y-8 font-body">
+
+              <!-- หมวดที่ 1: ข้อมูลการศึกษาและรหัสนักศึกษา -->
+              <div>
+                <h3 class="text-base font-sans font-bold text-nrBlue-800 pb-2 border-b border-red-100 flex items-center gap-2 mb-4">
+                  <span class="w-6 h-6 rounded-lg bg-red-100 text-nrBlue-800 text-xs flex items-center justify-center font-bold">1</span>
+                  ข้อมูลการศึกษาและรหัสนักศึกษา
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <!-- รหัสนักศึกษา 11 หลัก -->
+                  <div>
+                    <label for="student_code" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      รหัสนักศึกษา (11 หลัก) <span class="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="student_code"
+                      name="student_code"
+                      maxlength="11"
+                      pattern="\d{11}"
+                      required
+                      placeholder="เช่น 69301010001"
+                      oninput="this.value = this.value.replace(/\D/g, '').slice(0, 11)"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white font-mono tracking-wider"
+                    />
+                    <p class="text-xs text-slate-500 mt-1">กรอกตัวเลข 11 หลักให้ครบถ้วน</p>
+                  </div>
+
+                  <!-- ระดับชั้น -->
+                  <div>
+                    <label for="education_level" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      ระดับชั้น <span class="text-red-600">*</span>
+                    </label>
+                    <select
+                      id="education_level"
+                      name="education_level"
+                      required
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    >
+                      <option value="">-- เลือกระดับชั้น --</option>
+                      <option value="ปวช.1">ปวช.1 (ประกาศนียบัตรวิชาชีพ ชั้นปีที่ 1)</option>
+                      <option value="ปวช.2">ปวช.2 (ประกาศนียบัตรวิชาชีพ ชั้นปีที่ 2)</option>
+                      <option value="ปวช.3">ปวช.3 (ประกาศนียบัตรวิชาชีพ ชั้นปีที่ 3)</option>
+                      <option value="ปวส.1">ปวส.1 (ประกาศนียบัตรวิชาชีพชั้นสูง ชั้นปีที่ 1)</option>
+                      <option value="ปวส.2">ปวส.2 (ประกาศนียบัตรวิชาชีพชั้นสูง ชั้นปีที่ 2)</option>
+                    </select>
+                  </div>
+
+                  <!-- แผนกวิชา / สาขาวิชา -->
+                  <div class="sm:col-span-2">
+                    <label for="department" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      แผนกวิชา / สาขาวิชา <span class="text-red-600">*</span>
+                    </label>
+                    <select
+                      id="department"
+                      name="department"
+                      required
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    >
+                      <option value="">-- เลือกแผนกวิชา / สาขาวิชา --</option>
+                      <option value="ช่างยนต์">ช่างยนต์</option>
+                      <option value="ช่างไฟฟ้ากำลัง">ช่างไฟฟ้ากำลัง</option>
+                      <option value="ช่างอิเล็กทรอนิกส์">ช่างอิเล็กทรอนิกส์</option>
+                      <option value="เทคโนโลยีสารสนเทศ">เทคโนโลยีสารสนเทศ</option>
+                      <option value="การบัญชี">การบัญชี</option>
+                      <option value="การตลาด">การตลาด</option>
+                      <option value="ช่างก่อสร้าง">ช่างก่อสร้าง</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- หมวดที่ 2: ข้อมูลส่วนตัวนักศึกษา -->
+              <div>
+                <h3 class="text-base font-sans font-bold text-nrBlue-800 pb-2 border-b border-red-100 flex items-center gap-2 mb-4">
+                  <span class="w-6 h-6 rounded-lg bg-red-100 text-nrBlue-800 text-xs flex items-center justify-center font-bold">2</span>
+                  ข้อมูลส่วนตัวนักศึกษา
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                  <!-- คำนำหน้าชื่อ -->
+                  <div class="sm:col-span-3">
+                    <label for="prefix" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      คำนำหน้าชื่อ <span class="text-red-600">*</span>
+                    </label>
+                    <select
+                      id="prefix"
+                      name="prefix"
+                      required
+                      class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    >
+                      <option value="">เลือก</option>
+                      <option value="นาย">นาย</option>
+                      <option value="นางสาว">นางสาว</option>
+                      <option value="นาง">นาง</option>
+                    </select>
+                  </div>
+
+                  <!-- ชื่อ - นามสกุล -->
+                  <div class="sm:col-span-9">
+                    <label for="full_name" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      ชื่อ - นามสกุล <span class="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="full_name"
+                      name="full_name"
+                      required
+                      placeholder="เช่น สมชาย ใจดี"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    />
+                  </div>
+
+                  <!-- เลขบัตรประจำตัวประชาชน 13 หลัก -->
+                  <div class="sm:col-span-6">
+                    <label for="national_id" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      เลขบัตรประจำตัวประชาชน (13 หลัก) <span class="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="national_id"
+                      name="national_id"
+                      maxlength="13"
+                      pattern="\d{13}"
+                      required
+                      placeholder="1310100123456"
+                      oninput="this.value = this.value.replace(/\D/g, '').slice(0, 13)"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white font-mono tracking-wider"
+                    />
+                  </div>
+
+                  <!-- วัน/เดือน/ปีเกิด -->
+                  <div class="sm:col-span-6">
+                    <label for="birth_date" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      วัน/เดือน/ปีเกิด <span class="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="birth_date"
+                      name="birth_date"
+                      required
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    />
+                  </div>
+
+                  <!-- เบอร์โทรศัพท์ -->
+                  <div class="sm:col-span-6">
+                    <label for="phone" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      เบอร์โทรศัพท์นักศึกษา <span class="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      maxlength="10"
+                      pattern="0\d{8,9}"
+                      required
+                      placeholder="0812345678"
+                      oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    />
+                  </div>
+
+                  <!-- อีเมล -->
+                  <div class="sm:col-span-6">
+                    <label for="email" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      อีเมล <span class="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      placeholder="student@nrtech.ac.th"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    />
+                  </div>
+
+                  <!-- ที่อยู่ปัจจุบัน -->
+                  <div class="sm:col-span-12">
+                    <label for="address" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      ที่อยู่ปัจจุบัน (บ้านเลขที่ / หมู่ / ตำบล / อำเภอ / จังหวัด) <span class="text-red-600">*</span>
+                    </label>
+                    <textarea
+                      id="address"
+                      name="address"
+                      rows="2"
+                      required
+                      placeholder="เช่น 123 หมู่ 4 ต.นางรอง อ.นางรอง จ.บุรีรัมย์ 31110"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- หมวดที่ 3: ข้อมูลผู้ปกครอง -->
+              <div>
+                <h3 class="text-base font-sans font-bold text-nrBlue-800 pb-2 border-b border-red-100 flex items-center gap-2 mb-4">
+                  <span class="w-6 h-6 rounded-lg bg-red-100 text-nrBlue-800 text-xs flex items-center justify-center font-bold">3</span>
+                  ข้อมูลผู้ปกครองที่ติดต่อได้สะดวก
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label for="guardian_name" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      ชื่อ - นามสกุล ผู้ปกครอง <span class="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="guardian_name"
+                      name="guardian_name"
+                      required
+                      placeholder="เช่น นายสมศักดิ์ ใจดี"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label for="guardian_phone" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                      เบอร์โทรศัพท์ผู้ปกครอง <span class="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      id="guardian_phone"
+                      name="guardian_phone"
+                      maxlength="10"
+                      pattern="0\d{8,9}"
+                      required
+                      placeholder="0898765432"
+                      oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)"
+                      class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none transition bg-red-50/30 focus:bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- ปุ่มบันทึกข้อมูล -->
+              <div class="pt-4 border-t border-red-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onclick="resetRegistrationForm()"
+                  class="px-5 py-3 rounded-xl border border-red-200 text-nrBlue-800 bg-white hover:bg-red-50 font-semibold text-sm transition cursor-pointer"
+                >
+                  ล้างข้อมูลในฟอร์ม
+                </button>
+
+                <button
+                  id="submit-registration-btn"
+                  type="submit"
+                  class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-nrBlue-800 to-nrBlue-700 hover:from-nrBlue-900 hover:to-nrBlue-800 text-white font-semibold text-sm sm:text-base shadow-md hover:shadow-lg transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <svg id="submit-spinner" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  <svg id="submit-icon" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  <span id="submit-btn-text">บันทึกข้อมูลลงทะเบียน</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- คอลัมน์ด้านขวา: ใบยืนยันการลงทะเบียนล่าสุด & ข้อมูลสถานศึกษา -->
+        <div class="lg:col-span-4 space-y-6">
+
+          <!-- การ์ดใบยืนยันการลงทะเบียน (แสดงเมื่อบันทึกสำเร็จ) -->
+          <div id="confirmation-card" class="hidden bg-white rounded-3xl shadow-card border-2 border-nrBlue-700/35 overflow-hidden fade-in">
+            <div class="bg-nrBlue-700 px-5 py-4 text-white flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-white p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5v0jyy4jUQ_ge1Zt95Xi8yj33IMfkJ_AA3zurlC8BpQ&s=10"
+                    alt="ตราวิทยาลัยเทคนิคนางรอง"
+                    class="w-full h-full object-contain rounded-lg"
+                    onerror="this.style.display='none';"
+                  />
+                </div>
+                <h3 class="font-bold text-base">ใบยืนยันการลงทะเบียน</h3>
+              </div>
+              <span id="confirm-storage-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-white text-nrBlue-800 font-bold">
+                Supabase
+              </span>
+            </div>
+
+            <div id="confirmation-body" class="p-5 space-y-2.5 text-sm font-body">
+              <!-- เติมข้อมูลด้วย JS -->
+            </div>
+
+            <div class="px-5 pb-5 pt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onclick="window.print()"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-nrBlue-700 hover:bg-nrBlue-800 text-white text-xs font-semibold transition cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span>พิมพ์ใบยืนยัน</span>
+              </button>
+              <button
+                type="button"
+                onclick="switchTab('students')"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-nrBlue-800 border border-red-200 text-xs font-semibold transition cursor-pointer"
+              >
+                <span>ดูรายชื่อทั้งหมด</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- การ์ดข้อมูลวิทยาลัยเทคนิคนางรอง -->
+          <div class="bg-white rounded-3xl shadow-card border border-red-100 p-6 space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-red-100 text-nrBlue-700 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-nrBlue-800 text-base">วิทยาลัยเทคนิคนางรอง</h3>
+                <p class="text-xs text-slate-500 font-body">อ.นางรอง จ.บุรีรัมย์</p>
+              </div>
+            </div>
+
+            <div class="text-xs sm:text-sm text-slate-600 font-body space-y-2 leading-relaxed">
+              <p>• <strong>ระดับที่เปิดสอน:</strong> ปวช. (1–3) และ ปวส. (1–2)</p>
+              <p>• <strong>หลักเกณฑ์การกรอก:</strong> รหัสนักศึกษา 11 หลัก และเลขบัตรประชาชน 13 หลักต้องไม่ซ้ำกับผู้ที่ลงทะเบียนแล้ว</p>
+              <p>• <strong>การตรวจสอบ:</strong> หลังบันทึกข้อมูล สามารถตรวจสอบสถานะรายชื่อได้ทันทีที่แท็บ <em>"รายชื่อผู้ลงทะเบียน / ตรวจสอบสถานะ"</em></p>
+            </div>
+
+            <div class="pt-3 border-t border-red-100 flex items-center justify-between text-xs text-slate-500 font-body">
+              <span>จำนวนที่ลงทะเบียนแล้ว</span>
+              <span id="sidebar-student-total" class="font-bold text-nrBlue-700 text-sm">0 คน</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- แท็บที่ 2: รายชื่อผู้ลงทะเบียน / ตรวจสอบสถานะ (Registered Students)  -->
+    <!-- =================================================================== -->
+    <section id="tab-students" class="tab-panel hidden fade-in space-y-6">
+      <div class="bg-white rounded-3xl shadow-card border border-red-100 overflow-hidden">
+        <!-- ส่วนหัวและปุ่มรีเฟรช -->
+        <div class="bg-gradient-to-r from-nrBlue-800 to-nrBlue-700 px-6 py-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+              <span class="w-2 h-6 rounded-full bg-white inline-block"></span>
+              รายชื่อผู้ลงทะเบียนและตรวจสอบสถานะ
+            </h2>
+            <p id="students-source-subtitle" class="text-xs sm:text-sm text-red-50 font-body mt-1">
+              กำลังแสดงข้อมูลจาก: โหมดทดลองใช้งาน (Local Demo)
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onclick="loadStudents()"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-nrBlue-800 hover:bg-red-50 text-sm font-semibold transition cursor-pointer self-start sm:self-auto shadow-xs"
+          >
+            <svg id="refresh-students-icon" class="w-4 h-4 text-nrBlue-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>รีเฟรชข้อมูล</span>
+          </button>
+        </div>
+
+        <!-- แถบค้นหาและตัวกรอง -->
+        <div class="p-6 border-b border-slate-100 bg-slate-50/60">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 font-body">
+            <!-- ค้นหารหัสนักศึกษา / ชื่อ / แผนก -->
+            <div class="md:col-span-6">
+              <label for="search-input" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                ค้นหา (รหัสนักศึกษา / ชื่อ-นามสกุล / แผนกวิชา)
+              </label>
+              <div class="relative">
+                <input
+                  type="text"
+                  id="search-input"
+                  oninput="renderStudentsTable()"
+                  placeholder="พิมพ์รหัส 11 หลัก, ชื่อ หรือแผนกวิชา..."
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none bg-white text-sm"
+                />
+                <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- กรองระดับชั้น -->
+            <div class="md:col-span-3">
+              <label for="filter-level" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                ระดับชั้น
+              </label>
+              <select
+                id="filter-level"
+                onchange="renderStudentsTable()"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none bg-white text-sm"
+              >
+                <option value="">ทุกระดับชั้น</option>
+                <option value="ปวช.1">ปวช.1</option>
+                <option value="ปวช.2">ปวช.2</option>
+                <option value="ปวช.3">ปวช.3</option>
+                <option value="ปวส.1">ปวส.1</option>
+                <option value="ปวส.2">ปวส.2</option>
+              </select>
+            </div>
+
+            <!-- กรองแผนกวิชา -->
+            <div class="md:col-span-3">
+              <label for="filter-department" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                แผนกวิชา
+              </label>
+              <select
+                id="filter-department"
+                onchange="renderStudentsTable()"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none bg-white text-sm"
+              >
+                <option value="">ทุกแผนกวิชา</option>
+                <option value="ช่างยนต์">ช่างยนต์</option>
+                <option value="ช่างไฟฟ้ากำลัง">ช่างไฟฟ้ากำลัง</option>
+                <option value="ช่างอิเล็กทรอนิกส์">ช่างอิเล็กทรอนิกส์</option>
+                <option value="เทคโนโลยีสารสนเทศ">เทคโนโลยีสารสนเทศ</option>
+                <option value="การบัญชี">การบัญชี</option>
+                <option value="การตลาด">การตลาด</option>
+                <option value="ช่างก่อสร้าง">ช่างก่อสร้าง</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ตารางแสดงรายชื่อนักศึกษา -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse font-body">
+            <thead>
+              <tr class="bg-red-50 text-nrBlue-800 text-xs uppercase tracking-wider border-b border-red-100">
+                <th class="py-3.5 px-4 font-bold">รหัสนักศึกษา</th>
+                <th class="py-3.5 px-4 font-bold">ชื่อ - นามสกุล</th>
+                <th class="py-3.5 px-4 font-bold">ระดับชั้น</th>
+                <th class="py-3.5 px-4 font-bold">แผนกวิชา</th>
+                <th class="py-3.5 px-4 font-bold">เบอร์โทร / อีเมล</th>
+                <th class="py-3.5 px-4 font-bold">ผู้ปกครอง</th>
+                <th class="py-3.5 px-4 font-bold text-center">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="students-table-body" class="divide-y divide-red-50 text-sm">
+              <!-- เติมข้อมูลด้วย JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- สถานะว่าง / สรุปจำนวนที่แสดง -->
+        <div class="px-6 py-4 bg-red-50/40 border-t border-red-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600 font-body">
+          <span id="filtered-count-text">แสดง 0 รายการ</span>
+          <span>วิทยาลัยเทคนิคนางรอง · ระบบทะเบียนนักศึกษา</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- แท็บที่ 3: ตั้งค่า Supabase & SQL Schema (Supabase Setup)            -->
+    <!-- =================================================================== -->
+    <section id="tab-settings" class="tab-panel hidden fade-in space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- ฟอร์มตั้งค่า Project URL และ Anon Key (5 คอลัมน์) -->
+        <div class="lg:col-span-5">
+          <div class="bg-white rounded-3xl shadow-card border border-red-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-nrBlue-800 to-nrBlue-700 px-6 py-5 text-white">
+              <h2 class="text-lg font-bold flex items-center gap-2">
+                <span class="w-2 h-6 rounded-full bg-white inline-block"></span>
+                ตั้งค่าการเชื่อมต่อ Supabase
+              </h2>
+              <p class="text-xs text-red-50 font-body mt-1">
+                ค่าที่บันทึกจะถูกเก็บใน localStorage ของเบราว์เซอร์นี้
+              </p>
+            </div>
+
+            <form id="supabase-config-form" onsubmit="handleSaveSupabaseConfig(event)" class="p-6 space-y-4 font-body">
+              <div>
+                <label for="supabase-url" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Supabase Project URL
+                </label>
+                <input
+                  type="url"
+                  id="supabase-url"
+                  placeholder="https://xxxxxxxxxxxx.supabase.co"
+                  class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none text-sm font-mono"
+                />
+              </div>
+
+              <div>
+                <label for="supabase-anon-key" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Supabase Anon (Public) Key
+                </label>
+                <textarea
+                  id="supabase-anon-key"
+                  rows="3"
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-nrBlue-700 focus:ring-2 focus:ring-nrBlue-700/20 outline-none text-sm font-mono"
+                ></textarea>
+              </div>
+
+              <div class="pt-2 flex flex-wrap gap-2.5">
+                <button
+                  type="submit"
+                  class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-nrBlue-700 hover:bg-nrBlue-800 text-white text-sm font-semibold transition cursor-pointer"
+                >
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>บันทึกการตั้งค่า</span>
+                </button>
+
+                <button
+                  type="button"
+                  onclick="testSupabaseConnection()"
+                  class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-red-50 text-nrBlue-800 border border-red-200 text-sm font-semibold transition cursor-pointer"
+                >
+                  <svg class="w-4 h-4 text-nrBlue-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>ทดสอบการเชื่อมต่อ</span>
+                </button>
+              </div>
+
+              <div class="pt-3 border-t border-red-100 flex items-center justify-between">
+                <span class="text-xs text-slate-500">ต้องการกลับไปใช้โหมดทดลอง?</span>
+                <button
+                  type="button"
+                  onclick="clearSupabaseConfig()"
+                  class="text-xs font-semibold text-red-600 hover:text-red-700 underline cursor-pointer"
+                >
+                  ล้างค่าและใช้โหมด Demo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- โค้ด SQL Schema สำหรับสร้างตารางและ RLS ใน Supabase (7 คอลัมน์) -->
+        <div class="lg:col-span-7">
+          <div class="bg-white rounded-3xl shadow-card border border-red-100 overflow-hidden">
+            <div class="bg-nrBlue-900 px-6 py-4 text-white flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 class="text-base sm:text-lg font-bold flex items-center gap-2">
+                  <span class="w-2 h-5 rounded-full bg-white inline-block"></span>
+                  SQL Script สำหรับสร้างตารางใน Supabase SQL Editor
+                </h2>
+                <p class="text-xs text-red-50 font-body mt-0.5">
+                  คัดลอกไปรันในเมนู <strong>SQL Editor</strong> ของโปรเจกต์ Supabase
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onclick="copySqlScript()"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-red-50 text-nrBlue-800 text-xs sm:text-sm font-bold transition cursor-pointer"
+              >
+                <svg class="w-4 h-4 text-nrBlue-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span id="copy-sql-text">คัดลอก SQL</span>
+              </button>
+            </div>
+
+            <div class="p-5 bg-red-950 text-red-50 overflow-x-auto">
+              <pre id="sql-script-code" class="text-xs sm:text-sm font-mono leading-relaxed text-red-100"><code>-- สร้างตาราง students สำหรับระบบลงทะเบียนนักศึกษา วิทยาลัยเทคนิคนางรอง
+create table if not exists public.students (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  student_code text not null unique check (char_length(student_code) = 11),
+  prefix text not null check (prefix in ('นาย', 'นางสาว', 'นาง')),
+  full_name text not null,
+  national_id text not null unique check (char_length(national_id) = 13),
+  birth_date date not null,
+  phone text not null,
+  email text not null,
+  education_level text not null check (education_level in ('ปวช.1', 'ปวช.2', 'ปวช.3', 'ปวส.1', 'ปวส.2')),
+  department text not null,
+  address text not null,
+  guardian_name text not null,
+  guardian_phone text not null
+);
+
+-- สร้าง Index เพื่อช่วยให้ค้นหาและเรียงลำดับได้รวดเร็ว
+create index if not exists idx_students_code on public.students (student_code);
+create index if not exists idx_students_department on public.students (department);
+
+-- เปิดใช้งาน Row Level Security (RLS)
+alter table public.students enable row level security;
+
+-- Policy เบื้องต้นสำหรับช่วงพัฒนา (อนุญาตให้ anon อ่าน/เพิ่ม/ลบ ข้อมูลได้)
+-- คำแนะนำ: เมื่อใช้งานจริงในระบบโปรดักชัน ควรปรับ Policy ให้รัดกุมขึ้นตามบทบาทผู้ใช้
+drop policy if exists "Allow anon select students" on public.students;
+create policy "Allow anon select students"
+  on public.students for select
+  to anon
+  using (true);
+
+drop policy if exists "Allow anon insert students" on public.students;
+create policy "Allow anon insert students"
+  on public.students for insert
+  to anon
+  with check (true);
+
+drop policy if exists "Allow anon delete students" on public.students;
+create policy "Allow anon delete students"
+  on public.students for delete
+  to anon
+  using (true);</code></pre>
+            </div>
+
+            <div class="p-5 bg-red-50/60 border-t border-red-100 text-xs sm:text-sm text-slate-700 font-body space-y-1.5">
+              <p class="font-bold text-nrBlue-800">ขั้นตอนการเชื่อมต่อ Supabase:</p>
+              <ol class="list-decimal list-inside space-y-1">
+                <li>สร้างโปรเจกต์ใหม่ที่ <span class="font-mono text-nrBlue-700">supabase.com</span> แล้วเปิดเมนู <strong>SQL Editor</strong></li>
+                <li>วางโค้ด SQL ด้านบนแล้วกด <strong>Run</strong> เพื่อสร้างตาราง <span class="font-mono">public.students</span> และ Policy</li>
+                <li>ไปที่ <strong>Project Settings → API</strong> คัดลอก <strong>Project URL</strong> และ <strong>anon public key</strong> มาใส่ช่องด้านซ้าย</li>
+                <li>กด <strong>บันทึกการตั้งค่า</strong> และ <strong>ทดสอบการเชื่อมต่อ</strong> ระบบจะสลับไปใช้งานฐานข้อมูลจริงทันที</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- โมดอลยืนยันการลบข้อมูล (แทน confirm()) -->
+  <div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-red-950/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 fade-in">
+      <div class="flex items-center gap-3 text-red-600 mb-3">
+        <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">ยืนยันการลบข้อมูลนักศึกษา</h3>
+      </div>
+
+      <p id="delete-modal-desc" class="text-sm text-slate-600 font-body mb-6">
+        คุณต้องการลบข้อมูลรายชื่อนี้ออกจากระบบใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้
+      </p>
+
+      <div class="flex justify-end gap-2.5">
+        <button
+          type="button"
+          onclick="closeDeleteModal()"
+          class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-semibold transition cursor-pointer"
+        >
+          ยกเลิก
+        </button>
+        <button
+          id="confirm-delete-btn"
+          type="button"
+          class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition cursor-pointer"
+        >
+          ยืนยันการลบ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ส่วนท้าย (Footer) -->
+  <footer class="bg-nrBlue-900 text-red-50 border-t-4 border-white mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm font-body">
+      <div>
+        <span class="font-bold text-white">วิทยาลัยเทคนิคนางรอง</span> · ถนนโชคชัย-เดชอุดม ต.นางรอง อ.นางรอง จ.บุรีรัมย์ 31110
+      </div>
+      <div class="text-white font-sans font-medium">
+        Nang Rong Technical College Student Registration System
+      </div>
+    </div>
+  </footer>
+
+  <!-- =================================================================== -->
+  <!-- JavaScript: จัดการ State, Supabase Client, ฟอร์มลงทะเบียน และตาราง    -->
+  <!-- =================================================================== -->
+  <script>
+    // กุญแจสำหรับเก็บค่าใน localStorage
+    const STORAGE_KEYS = {
+      SUPABASE_URL: 'nrtech_supabase_url',
+      SUPABASE_ANON_KEY: 'nrtech_supabase_anon_key',
+      DEMO_STUDENTS: 'nrtech_demo_students_v1',
+    };
+
+    // ตัวแปรสถานะของแอปพลิเคชัน
+    const appState = {
+      supabaseClient: null,
+      isConnectedToSupabase: false,
+      students: [],
+      pendingDeleteTarget: null,
+    };
+
+    // ข้อมูลตัวอย่างเริ่มต้นสำหรับโหมดทดลองใช้งาน (Offline / Demo)
+    const INITIAL_DEMO_STUDENTS = [
+      {
+        id: 'demo-1001',
+        created_at: '2026-11-20T08:30:00.000Z',
+        student_code: '69301010001',
+        prefix: 'นาย',
+        full_name: 'ธนากร ศรีสุข',
+        national_id: '1319900123451',
+        birth_date: '2010-05-14',
+        phone: '0819876543',
+        email: 'thanakorn.s@nrtech.ac.th',
+        education_level: 'ปวช.1',
+        department: 'ช่างยนต์',
+        address: '88 หมู่ 2 ต.นางรอง อ.นางรอง จ.บุรีรัมย์ 31110',
+        guardian_name: 'นายสมหมาย ศรีสุข',
+        guardian_phone: '0861112233',
+      },
+      {
+        id: 'demo-1002',
+        created_at: '2026-11-21T09:15:00.000Z',
+        student_code: '69301040012',
+        prefix: 'นางสาว',
+        full_name: 'ปวีณา วงศ์สวัสดิ์',
+        national_id: '1319900654328',
+        birth_date: '2010-09-22',
+        phone: '0924455667',
+        email: 'paweena.w@nrtech.ac.th',
+        education_level: 'ปวช.1',
+        department: 'เทคโนโลยีสารสนเทศ',
+        address: '45/3 ถ.ประจันตเขต ต.นางรอง อ.นางรอง จ.บุรีรัมย์ 31110',
+        guardian_name: 'นางรัตนา วงศ์สวัสดิ์',
+        guardian_phone: '0857788990',
+      },
+      {
+        id: 'demo-1003',
+        created_at: '2026-11-22T13:45:00.000Z',
+        student_code: '69302050008',
+        prefix: 'นางสาว',
+        full_name: 'กัญญาณัฐ พิมพ์ทอง',
+        national_id: '1319900987654',
+        birth_date: '2007-02-11',
+        phone: '0893344556',
+        email: 'kanyanat.p@nrtech.ac.th',
+        education_level: 'ปวส.1',
+        department: 'การบัญชี',
+        address: '210 หมู่ 7 ต.หนองโบสถ์ อ.นางรอง จ.บุรีรัมย์ 31110',
+        guardian_name: 'นายประเสริฐ พิมพ์ทอง',
+        guardian_phone: '0812233445',
+      },
+    ];
+
+    /**
+     * เริ่มต้นระบบเมื่อโหลดหน้าเว็บเสร็จสมบูรณ์
+     */
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        initDemoDataIfEmpty();
+        loadSavedConfigToInputs();
+        initSupabaseFromStorage();
+        updateConnectionUI();
+        await loadStudents();
+      } catch (err) {
+        console.error('Initialization error:', err);
+        showGlobalAlert('error', 'เกิดข้อผิดพลาดในการเริ่มต้นระบบ', err.message || 'ไม่สามารถเริ่มต้นระบบได้');
+      }
+    });
+
+    /**
+     * สร้างข้อมูลเดโมเริ่มต้นหากยังไม่เคยมีใน localStorage
+     */
+    function initDemoDataIfEmpty() {
+      const existing = localStorage.getItem(STORAGE_KEYS.DEMO_STUDENTS);
+      if (!existing) {
+        localStorage.setItem(STORAGE_KEYS.DEMO_STUDENTS, JSON.stringify(INITIAL_DEMO_STUDENTS));
+      }
+    }
+
+    /**
+     * โหลด URL และ Anon Key ที่บันทึกไว้มาแสดงในช่องตั้งค่า
+     */
+    function loadSavedConfigToInputs() {
+      const savedUrl = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || '';
+      const savedKey = localStorage.getItem(STORAGE_KEYS.SUPABASE_ANON_KEY) || '';
+      document.getElementById('supabase-url').value = savedUrl;
+      document.getElementById('supabase-anon-key').value = savedKey;
+    }
+
+    /**
+     * สร้าง Supabase Client จากค่าใน localStorage
+     */
+    function initSupabaseFromStorage() {
+      const url = (localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || '').trim();
+      const anonKey = (localStorage.getItem(STORAGE_KEYS.SUPABASE_ANON_KEY) || '').trim();
+
+      if (url && anonKey && window.supabase && typeof window.supabase.createClient === 'function') {
+        try {
+          appState.supabaseClient = window.supabase.createClient(url, anonKey);
+          appState.isConnectedToSupabase = true;
+          return;
+        } catch (err) {
+          console.error('Failed to create Supabase client:', err);
+        }
+      }
+
+      appState.supabaseClient = null;
+      appState.isConnectedToSupabase = false;
+    }
+
+    /**
+     * อัปเดตป้ายสถานะการเชื่อมต่อและแถบคำแนะนำด้านบน
+     */
+    function updateConnectionUI() {
+      const badge = document.getElementById('connection-status-badge');
+      const dot = document.getElementById('connection-dot');
+      const text = document.getElementById('connection-text');
+      const noticeBanner = document.getElementById('supabase-notice-banner');
+      const sourceSubtitle = document.getElementById('students-source-subtitle');
+
+      if (appState.isConnectedToSupabase) {
+        badge.className = 'inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white text-nrBlue-800 border border-white shadow-xs';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-nrBlue-700';
+        text.textContent = 'เชื่อมต่อ Supabase แล้ว';
+        noticeBanner.classList.add('hidden');
+        sourceSubtitle.textContent = 'กำลังแสดงข้อมูลจริงจาก: ฐานข้อมูล Supabase (ตาราง students)';
+      } else {
+        badge.className = 'inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium bg-white/15 text-white border border-white/30 backdrop-blur-sm';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-white animate-pulse';
+        text.textContent = 'โหมดทดลองใช้งาน (Demo / Local)';
+        noticeBanner.classList.remove('hidden');
+        sourceSubtitle.textContent = 'กำลังแสดงข้อมูลจาก: โหมดทดลองใช้งาน (Offline / Local Demo)';
+      }
+    }
+
+    /**
+     * สลับแท็บการทำงานหลัก
+     */
+    function switchTab(tabName) {
+      const tabs = ['register', 'students', 'settings'];
+      tabs.forEach((name) => {
+        const panel = document.getElementById(`tab-${name}`);
+        const btn = document.getElementById(`tab-btn-${name}`);
+
+        if (name === tabName) {
+          panel.classList.remove('hidden');
+          btn.className = 'tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition cursor-pointer bg-nrBlue-700 text-white shadow-sm';
+        } else {
+          panel.classList.add('hidden');
+          btn.className = 'tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition cursor-pointer text-slate-600 hover:bg-red-50 hover:text-nrBlue-800';
+        }
+      });
+
+      if (tabName === 'students') {
+        loadStudents();
+      }
+    }
+
+    /**
+     * แสดงข้อความแจ้งเตือนด้านบน
+     */
+    function showGlobalAlert(type, title, message) {
+      const container = document.getElementById('global-alert');
+      const inner = document.getElementById('global-alert-inner');
+      const icon = document.getElementById('global-alert-icon');
+      const titleEl = document.getElementById('global-alert-title');
+      const msgEl = document.getElementById('global-alert-message');
+
+      const styles = {
+        success: {
+          box: 'bg-white border-nrBlue-700/40 text-nrBlue-900',
+          iconHtml: `<svg class="w-5 h-5 text-nrBlue-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+        },
+        error: {
+          box: 'bg-red-50 border-red-300 text-red-900',
+          iconHtml: `<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+        },
+        info: {
+          box: 'bg-white border-red-200 text-slate-800',
+          iconHtml: `<svg class="w-5 h-5 text-nrBlue-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+        },
+      };
+
+      const selected = styles[type] || styles.info;
+      inner.className = `rounded-2xl p-4 border flex items-start justify-between gap-3 shadow-sm fade-in ${selected.box}`;
+      icon.innerHTML = selected.iconHtml;
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      container.classList.remove('hidden');
+    }
+
+    function hideGlobalAlert() {
+      document.getElementById('global-alert').classList.add('hidden');
+    }
+
+    /**
+     * เปลี่ยนสถานะปุ่มบันทึกขณะกำลังส่งข้อมูล
+     */
+    function setSubmittingState(isSubmitting) {
+      const btn = document.getElementById('submit-registration-btn');
+      const spinner = document.getElementById('submit-spinner');
+      const icon = document.getElementById('submit-icon');
+      const text = document.getElementById('submit-btn-text');
+
+      btn.disabled = isSubmitting;
+      spinner.classList.toggle('hidden', !isSubmitting);
+      icon.classList.toggle('hidden', isSubmitting);
+      text.textContent = isSubmitting ? 'กำลังบันทึกข้อมูล...' : 'บันทึกข้อมูลลงทะเบียน';
+    }
+
+    /**
+     * จัดการการส่งแบบฟอร์มลงทะเบียนนักศึกษา
+     */
+    async function handleRegisterSubmit(event) {
+      event.preventDefault();
+      hideGlobalAlert();
+
+      const form = event.target;
+      const payload = {
+        student_code: form.student_code.value.trim(),
+        prefix: form.prefix.value,
+        full_name: form.full_name.value.trim(),
+        national_id: form.national_id.value.trim(),
+        birth_date: form.birth_date.value,
+        phone: form.phone.value.trim(),
+        email: form.email.value.trim(),
+        education_level: form.education_level.value,
+        department: form.department.value,
+        address: form.address.value.trim(),
+        guardian_name: form.guardian_name.value.trim(),
+        guardian_phone: form.guardian_phone.value.trim(),
+      };
+
+      // ตรวจสอบความถูกต้องของรหัสนักศึกษาและเลขบัตรประชาชน
+      if (!/^\d{11}$/.test(payload.student_code)) {
+        showGlobalAlert('error', 'รหัสนักศึกษาไม่ถูกต้อง', 'กรุณากรอกรหัสนักศึกษาเป็นตัวเลข 11 หลัก');
+        return;
+      }
+      if (!/^\d{13}$/.test(payload.national_id)) {
+        showGlobalAlert('error', 'เลขบัตรประจำตัวประชาชนไม่ถูกต้อง', 'กรุณากรอกเลขบัตรประจำตัวประชาชนเป็นตัวเลข 13 หลัก');
+        return;
+      }
+
+      setSubmittingState(true);
+
+      try {
+        let savedRecord = null;
+        let savedTo = 'Local Demo';
+
+        if (appState.isConnectedToSupabase && appState.supabaseClient) {
+          // บันทึกลง Supabase จริง
+          const { data, error } = await appState.supabaseClient
+            .from('students')
+            .insert([payload])
+            .select()
+            .single();
+
+          if (error) {
+            // จัดการกรณีข้อมูลซ้ำ (Unique constraint violation)
+            if (error.code === '23505') {
+              throw new Error('รหัสนักศึกษาหรือเลขบัตรประจำตัวประชาชนนี้ถูกลงทะเบียนไว้ในระบบแล้ว');
+            }
+            throw new Error(error.message || 'ไม่สามารถบันทึกข้อมูลลง Supabase ได้');
+          }
+
+          savedRecord = data;
+          savedTo = 'Supabase';
+        } else {
+          // บันทึกลงโหมดทดลองใช้งาน (localStorage)
+          const demoList = getDemoStudents();
+          const duplicate = demoList.some(
+            (item) => item.student_code === payload.student_code || item.national_id === payload.national_id
+          );
+
+          if (duplicate) {
+            throw new Error('รหัสนักศึกษาหรือเลขบัตรประจำตัวประชาชนนี้ถูกลงทะเบียนไว้ในระบบแล้ว');
+          }
+
+          savedRecord = {
+            ...payload,
+            id: `demo-${Date.now()}`,
+            created_at: new Date().toISOString(),
+          };
+
+          demoList.unshift(savedRecord);
+          localStorage.setItem(STORAGE_KEYS.DEMO_STUDENTS, JSON.stringify(demoList));
+          savedTo = 'Demo / Local';
+        }
+
+        // แสดงใบยืนยันการลงทะเบียน
+        renderConfirmationCard(savedRecord, savedTo);
+        showGlobalAlert(
+          'success',
+          'ลงทะเบียนนักศึกษาสำเร็จ',
+          `บันทึกข้อมูลของ ${savedRecord.prefix}${savedRecord.full_name} (${savedRecord.student_code}) ลงใน ${savedTo} เรียบร้อยแล้ว`
+        );
+
+        form.reset();
+        await loadStudents();
+      } catch (err) {
+        console.error('Registration error:', err);
+        showGlobalAlert('error', 'บันทึกข้อมูลไม่สำเร็จ', err.message || 'เกิดข้อผิดพลาดระหว่างบันทึกข้อมูล');
+      } finally {
+        setSubmittingState(false);
+      }
+    }
+
+    /**
+     * แสดงใบยืนยันการลงทะเบียนที่ด้านขวาของหน้าลงทะเบียน
+     */
+    function renderConfirmationCard(record, sourceLabel) {
+      const card = document.getElementById('confirmation-card');
+      const badge = document.getElementById('confirm-storage-badge');
+      const body = document.getElementById('confirmation-body');
+
+      badge.textContent = sourceLabel;
+      body.innerHTML = `
+        <div class="flex items-center gap-3 pb-3 mb-2 border-b border-red-100">
+          <img
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5v0jyy4jUQ_ge1Zt95Xi8yj33IMfkJ_AA3zurlC8BpQ&s=10"
+            alt="ตราวิทยาลัยเทคนิคนางรอง"
+            class="w-12 h-12 object-contain rounded-xl bg-red-50 p-1 border border-red-100 shrink-0"
+            onerror="this.style.display='none';"
+          />
+          <div class="leading-tight">
+            <p class="font-bold text-nrBlue-800 text-sm">วิทยาลัยเทคนิคนางรอง</p>
+            <p class="text-xs text-slate-500 mt-0.5">หลักฐานการลงทะเบียนเข้าศึกษาต่อ</p>
+          </div>
+        </div>
+        <div class="flex justify-between py-1 border-b border-red-50">
+          <span class="text-slate-500">รหัสนักศึกษา</span>
+          <span class="font-mono font-bold text-nrBlue-800">${escapeHtml(record.student_code)}</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-red-50">
+          <span class="text-slate-500">ชื่อ - นามสกุล</span>
+          <span class="font-semibold text-slate-900">${escapeHtml(record.prefix)}${escapeHtml(record.full_name)}</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-red-50">
+          <span class="text-slate-500">ระดับชั้น</span>
+          <span class="font-semibold text-nrBlue-700">${escapeHtml(record.education_level)}</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-red-50">
+          <span class="text-slate-500">แผนกวิชา</span>
+          <span class="font-semibold text-slate-800">${escapeHtml(record.department)}</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-red-50">
+          <span class="text-slate-500">เบอร์โทรศัพท์</span>
+          <span class="text-slate-800">${escapeHtml(record.phone)}</span>
+        </div>
+        <div class="flex justify-between py-1">
+          <span class="text-slate-500">ผู้ปกครอง</span>
+          <span class="text-slate-800">${escapeHtml(record.guardian_name)} (${escapeHtml(record.guardian_phone)})</span>
+        </div>
+      `;
+
+      card.classList.remove('hidden');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function resetRegistrationForm() {
+      document.getElementById('registration-form').reset();
+      hideGlobalAlert();
+    }
+
+    /**
+     * ดึงข้อมูลเดโมจาก localStorage
+     */
+    function getDemoStudents() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.DEMO_STUDENTS);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    /**
+     * โหลดรายชื่อนักศึกษาจาก Supabase หรือ Local Demo
+     */
+    async function loadStudents() {
+      const refreshIcon = document.getElementById('refresh-students-icon');
+      if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+      try {
+        if (appState.isConnectedToSupabase && appState.supabaseClient) {
+          const { data, error } = await appState.supabaseClient
+            .from('students')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            throw new Error(error.message || 'ไม่สามารถดึงข้อมูลจาก Supabase ได้');
+          }
+
+          appState.students = Array.isArray(data) ? data : [];
+        } else {
+          appState.students = getDemoStudents();
+        }
+
+        updateCounters();
+        renderStudentsTable();
+      } catch (err) {
+        console.error('Load students error:', err);
+        showGlobalAlert('error', 'โหลดรายชื่อไม่สำเร็จ', err.message);
+      } finally {
+        if (refreshIcon) {
+          setTimeout(() => refreshIcon.classList.remove('animate-spin'), 300);
+        }
+      }
+    }
+
+    /**
+     * อัปเดตตัวเลขจำนวนผู้ลงทะเบียนบนแท็บและแถบด้านข้าง
+     */
+    function updateCounters() {
+      const total = appState.students.length;
+      document.getElementById('students-count-badge').textContent = total;
+      document.getElementById('sidebar-student-total').textContent = `${total} คน`;
+    }
+
+    /**
+     * กรองและแสดงตารางรายชื่อนักศึกษา
+     */
+    function renderStudentsTable() {
+      const tbody = document.getElementById('students-table-body');
+      const query = (document.getElementById('search-input').value || '').trim().toLowerCase();
+      const levelFilter = document.getElementById('filter-level').value;
+      const deptFilter = document.getElementById('filter-department').value;
+
+      const filtered = appState.students.filter((student) => {
+        const matchesLevel = !levelFilter || student.education_level === levelFilter;
+        const matchesDept = !deptFilter || student.department === deptFilter;
+        const matchesQuery =
+          !query ||
+          (student.student_code && student.student_code.toLowerCase().includes(query)) ||
+          (student.full_name && student.full_name.toLowerCase().includes(query)) ||
+          (student.department && student.department.toLowerCase().includes(query));
+
+        return matchesLevel && matchesDept && matchesQuery;
+      });
+
+      document.getElementById('filtered-count-text').textContent =
+        `แสดง ${filtered.length} รายการ จากทั้งหมด ${appState.students.length} รายการ`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-12 px-4 text-center text-slate-500">
+              <div class="flex flex-col items-center gap-2">
+                <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <p class="font-semibold text-slate-600">ไม่พบข้อมูลนักศึกษาตามเงื่อนไขที่ค้นหา</p>
+                <p class="text-xs">ลองปรับคำค้นหาหรือตัวกรองใหม่อีกครั้ง</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered
+        .map((student) => {
+          const recordKey = student.id || student.student_code;
+          const fullNameWithPrefix = `${student.prefix || ''}${student.full_name || ''}`;
+          return `
+            <tr class="hover:bg-red-50/60 transition">
+              <td class="py-3.5 px-4 font-mono font-bold text-nrBlue-800 whitespace-nowrap">
+                ${escapeHtml(student.student_code)}
+              </td>
+              <td class="py-3.5 px-4">
+                <div class="font-semibold text-slate-900">${escapeHtml(fullNameWithPrefix)}</div>
+                <div class="text-xs text-slate-400 font-mono">บัตรฯ ${escapeHtml(student.national_id)}</div>
+              </td>
+              <td class="py-3.5 px-4 whitespace-nowrap">
+                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-100 text-nrBlue-800">
+                  ${escapeHtml(student.education_level)}
+                </span>
+              </td>
+              <td class="py-3.5 px-4 whitespace-nowrap">
+                <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-nrBlue-700 border border-red-200">
+                  ${escapeHtml(student.department)}
+                </span>
+              </td>
+              <td class="py-3.5 px-4 text-xs">
+                <div class="font-medium text-slate-800">${escapeHtml(student.phone)}</div>
+                <div class="text-slate-500">${escapeHtml(student.email)}</div>
+              </td>
+              <td class="py-3.5 px-4 text-xs">
+                <div class="font-medium text-slate-800">${escapeHtml(student.guardian_name)}</div>
+                <div class="text-slate-500">${escapeHtml(student.guardian_phone)}</div>
+              </td>
+              <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                <button
+                  type="button"
+                  onclick="openDeleteModal('${escapeJsAttr(recordKey)}', '${escapeJsAttr(student.student_code)}', '${escapeJsAttr(fullNameWithPrefix)}')"
+                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 border border-red-200 transition cursor-pointer"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>ลบ</span>
+                </button>
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+
+    /**
+     * เปิดโมดอลยืนยันการลบข้อมูล
+     */
+    function openDeleteModal(recordId, studentCode, fullName) {
+      appState.pendingDeleteTarget = { recordId, studentCode, fullName };
+      document.getElementById('delete-modal-desc').textContent =
+        `คุณต้องการลบข้อมูลของ "${fullName}" (รหัส ${studentCode}) ออกจากระบบใช่หรือไม่?`;
+
+      const confirmBtn = document.getElementById('confirm-delete-btn');
+      confirmBtn.onclick = executeDeleteStudent;
+
+      const modal = document.getElementById('delete-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDeleteModal() {
+      const modal = document.getElementById('delete-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      appState.pendingDeleteTarget = null;
+    }
+
+    /**
+     * ดำเนินการลบข้อมูลนักศึกษาจาก Supabase หรือ Local Demo
+     */
+    async function executeDeleteStudent() {
+      const target = appState.pendingDeleteTarget;
+      if (!target) return;
+
+      closeDeleteModal();
+
+      try {
+        if (appState.isConnectedToSupabase && appState.supabaseClient) {
+          const { error } = await appState.supabaseClient
+            .from('students')
+            .delete()
+            .eq('id', target.recordId);
+
+          if (error) {
+            throw new Error(error.message || 'ไม่สามารถลบข้อมูลใน Supabase ได้');
+          }
+        } else {
+          const updated = getDemoStudents().filter(
+            (item) => (item.id || item.student_code) !== target.recordId
+          );
+          localStorage.setItem(STORAGE_KEYS.DEMO_STUDENTS, JSON.stringify(updated));
+        }
+
+        showGlobalAlert('success', 'ลบข้อมูลสำเร็จ', `ลบข้อมูลของ ${target.fullName} (${target.studentCode}) เรียบร้อยแล้ว`);
+        await loadStudents();
+      } catch (err) {
+        console.error('Delete student error:', err);
+        showGlobalAlert('error', 'ลบข้อมูลไม่สำเร็จ', err.message);
+      }
+    }
+
+    /**
+     * บันทึกการตั้งค่า Supabase URL และ Anon Key
+     */
+    async function handleSaveSupabaseConfig(event) {
+      event.preventDefault();
+      hideGlobalAlert();
+
+      const url = document.getElementById('supabase-url').value.trim();
+      const anonKey = document.getElementById('supabase-anon-key').value.trim();
+
+      if (!url || !anonKey) {
+        showGlobalAlert('error', 'ข้อมูลไม่ครบถ้วน', 'กรุณากรอกทั้ง Supabase Project URL และ Anon Key');
+        return;
+      }
+
+      try {
+        new URL(url);
+      } catch {
+        showGlobalAlert('error', 'URL ไม่ถูกต้อง', 'กรุณากรอก Supabase Project URL ให้ถูกต้อง เช่น https://xxxx.supabase.co');
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url);
+      localStorage.setItem(STORAGE_KEYS.SUPABASE_ANON_KEY, anonKey);
+
+      initSupabaseFromStorage();
+      updateConnectionUI();
+      await loadStudents();
+
+      showGlobalAlert(
+        'success',
+        'บันทึกการตั้งค่า Supabase แล้ว',
+        'ระบบได้อัปเดตการเชื่อมต่อ Supabase และโหลดรายชื่อนักศึกษาใหม่แล้ว'
+      );
+    }
+
+    /**
+     * ทดสอบการเชื่อมต่อกับตาราง students ใน Supabase
+     */
+    async function testSupabaseConnection() {
+      hideGlobalAlert();
+      const url = document.getElementById('supabase-url').value.trim();
+      const anonKey = document.getElementById('supabase-anon-key').value.trim();
+
+      if (!url || !anonKey) {
+        showGlobalAlert('error', 'ยังไม่ได้กรอกข้อมูลเชื่อมต่อ', 'กรุณากรอก Supabase Project URL และ Anon Key ก่อนทดสอบ');
+        return;
+      }
+
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        showGlobalAlert('error', 'ไม่พบไลบรารี Supabase', 'กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตเพื่อโหลด Supabase JS');
+        return;
+      }
+
+      try {
+        const testClient = window.supabase.createClient(url, anonKey);
+        const { error } = await testClient.from('students').select('id').limit(1);
+
+        if (error) {
+          throw new Error(error.message || 'ไม่สามารถเข้าถึงตาราง students ได้ กรุณาตรวจสอบว่าสร้างตารางและ RLS Policy แล้ว');
+        }
+
+        // บันทึกค่าอัตโนมัติเมื่อทดสอบผ่าน
+        localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url);
+        localStorage.setItem(STORAGE_KEYS.SUPABASE_ANON_KEY, anonKey);
+        initSupabaseFromStorage();
+        updateConnectionUI();
+        await loadStudents();
+
+        showGlobalAlert(
+          'success',
+          'เชื่อมต่อ Supabase สำเร็จ!',
+          'สามารถเชื่อมต่อและเข้าถึงตาราง public.students ได้เรียบร้อยแล้ว'
+        );
+      } catch (err) {
+        console.error('Connection test failed:', err);
+        showGlobalAlert('error', 'ทดสอบการเชื่อมต่อไม่สำเร็จ', err.message);
+      }
+    }
+
+    /**
+     * ล้างค่า Supabase และกลับไปใช้โหมดทดลองใช้งาน (Demo)
+     */
+    async function clearSupabaseConfig() {
+      localStorage.removeItem(STORAGE_KEYS.SUPABASE_URL);
+      localStorage.removeItem(STORAGE_KEYS.SUPABASE_ANON_KEY);
+      document.getElementById('supabase-url').value = '';
+      document.getElementById('supabase-anon-key').value = '';
+
+      initSupabaseFromStorage();
+      updateConnectionUI();
+      await loadStudents();
+
+      showGlobalAlert('info', 'กลับสู่โหมดทดลองใช้งาน (Demo)', 'ล้างค่า Supabase เรียบร้อยแล้ว ข้อมูลจะถูกจัดเก็บในเบราว์เซอร์ของคุณ');
+    }
+
+    /**
+     * คัดลอกโค้ด SQL Schema ไปยังคลิปบอร์ด
+     */
+    function copySqlScript() {
+      const sqlText = document.getElementById('sql-script-code').innerText;
+      const btnText = document.getElementById('copy-sql-text');
+
+      try {
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.value = sqlText;
+        tempTextarea.setAttribute('readonly', '');
+        tempTextarea.style.position = 'absolute';
+        tempTextarea.style.left = '-9999px';
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempTextarea);
+
+        const originalLabel = btnText.textContent;
+        btnText.textContent = 'คัดลอกแล้ว!';
+        showGlobalAlert('success', 'คัดลอก SQL Script สำเร็จ', 'นำไปวางใน Supabase SQL Editor แล้วกด Run ได้ทันที');
+
+        setTimeout(() => {
+          btnText.textContent = originalLabel;
+        }, 2000);
+      } catch (err) {
+        showGlobalAlert('error', 'คัดลอกไม่สำเร็จ', 'กรุณาเลือกและคัดลอกโค้ด SQL ด้วยตนเอง');
+      }
+    }
+
+    /**
+     * ป้องกัน XSS เมื่อแสดงผลข้อความใน HTML
+     */
+    function escapeHtml(value) {
+      if (value === null || value === undefined) return '';
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * ป้องกันการแตกของสตริงภายใน inline attribute
+     */
+    function escapeJsAttr(value) {
+      if (value === null || value === undefined) return '';
+      return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+  </script>
+</body>
+</html>
